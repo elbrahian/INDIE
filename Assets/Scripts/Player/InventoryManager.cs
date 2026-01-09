@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+using System.Collections. Generic;
 using UnityEngine;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager :  MonoBehaviour
 {
     public static InventoryManager Instance { get; private set; }
     
@@ -16,15 +16,22 @@ public class InventoryManager : MonoBehaviour
             return;
         }
         Instance = this;
-        Debug.Log(" InventoryManager inicializado correctamente");
     }
-    
+
     void Update()
     {
+    // ⭐ SOLO imprimir en consola si el UI NO está abierto
         if (Input.GetKeyDown(KeyCode.I))
         {
-            Debug.Log(" Tecla I presionada");
-            PrintInventory();
+        // Si existe el UI y está manejando la tecla, no hacer nada aquí
+        if (InventoryUI.Instance != null)
+        {
+            // El UI ya maneja la tecla, no hacer nada
+            return;
+        }
+        
+        // Fallback: si no hay UI, imprimir en consola
+        PrintInventory();
         }
     }
     
@@ -32,7 +39,7 @@ public class InventoryManager : MonoBehaviour
     {
         if (item == null)
         {
-            Debug.LogError(" Intentando agregar un item null");
+            Debug.LogError("❌ Item es null");
             return false;
         }
         
@@ -44,13 +51,20 @@ public class InventoryManager : MonoBehaviour
         {
             if (items.Count >= inventorySize)
             {
-                Debug.Log(" Inventario lleno!");
+                Debug.LogWarning("⚠️ Inventario lleno");
                 return false;
             }
-            items.Add(item, quantity);
+            items. Add(item, quantity);
         }
         
-        Debug.Log($" Agregado: {item. itemName} x{quantity}.  Total: {items[item]}");
+        Debug.Log($"✅ {item.itemName} x{quantity} agregado.  Total: {items[item]}");
+        
+        // ⭐ Actualizar UI si está abierto
+        if (InventoryUI.Instance != null && InventoryUI.Instance.IsOpen())
+        {
+            InventoryUI.Instance.UpdateUI();
+        }
+        
         return true;
     }
     
@@ -58,14 +72,20 @@ public class InventoryManager : MonoBehaviour
     {
         if (! items.ContainsKey(item) || items[item] < quantity)
         {
-            Debug. Log(" No tienes suficientes items");
+            Debug.LogWarning($"❌ No hay suficiente {item.itemName}");
             return false;
         }
         
         items[item] -= quantity;
         if (items[item] <= 0)
         {
-            items.Remove(item);
+            items. Remove(item);
+        }
+        
+        // Actualizar UI
+        if (InventoryUI.Instance != null && InventoryUI.Instance.IsOpen())
+        {
+            InventoryUI.Instance.UpdateUI();
         }
         
         return true;
@@ -73,24 +93,31 @@ public class InventoryManager : MonoBehaviour
     
     public int GetItemCount(Item item)
     {
-        return items.ContainsKey(item) ? items[item] : 0;
+        return items. ContainsKey(item) ? items[item] : 0;
+    }
+    
+    // ⭐ NUEVO: Método para que el UI obtenga todos los items
+    public Dictionary<Item, int> GetAllItems()
+    {
+        return new Dictionary<Item, int>(items);
     }
     
     public void PrintInventory()
     {
-        Debug.Log("====== INVENTARIO ======");
+        Debug.Log("====== 🎒 INVENTARIO ======");
         
         if (items.Count == 0)
         {
-            Debug.Log("(Inventario vacío)");
+            Debug.Log("(Vacío)");
             return;
         }
         
         foreach (var kvp in items)
         {
-            Debug.Log($"📦 {kvp.Key.itemName}: x{kvp.Value}");
+            Debug.Log($"📦 {kvp.Key.itemName}:  x{kvp.Value}");
         }
         
+        Debug.Log($"Slots usados: {items.Count}/{inventorySize}");
         Debug.Log("===========================");
     }
 }

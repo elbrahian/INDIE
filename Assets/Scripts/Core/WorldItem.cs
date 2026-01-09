@@ -11,15 +11,28 @@ public class WorldItem : MonoBehaviour
     
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
+        else
+        {
+            Debug.LogError("WorldItem:  No se encontro el Player.  Tiene el tag Player?");
+        }
+        
+        if (itemData == null)
+        {
+            Debug.LogError("WorldItem: Item Data no esta asignado en " + gameObject.name);
+        }
     }
     
     void Update()
     {
-        if (player == null) return;
-
-
-        float distance = Vector2.Distance(transform.position, player.position);
+        if (player == null || itemData == null) return;
+        
+        float distance = Vector2.Distance(transform. position, player.position);
         canPickup = distance <= pickupRange;
         
         if (canPickup && Input.GetKeyDown(KeyCode.E))
@@ -30,16 +43,31 @@ public class WorldItem : MonoBehaviour
     
     void Pickup()
     {
-        if (InventoryManager.Instance. AddItem(itemData, quantity))
+        if (InventoryManager.Instance != null)
         {
-            Destroy(gameObject);
+            if (InventoryManager.Instance.AddItem(itemData, quantity))
+            {
+                PickupEffect effect = GetComponent<PickupEffect>();
+                
+                if (effect != null)
+                {
+                    effect. PlayPickupEffect(player);
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("InventoryManager. Instance es null");
         }
     }
     
-    // Visualizar rango en el editor
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color. yellow;
+        Gizmos. color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, pickupRange);
     }
 }

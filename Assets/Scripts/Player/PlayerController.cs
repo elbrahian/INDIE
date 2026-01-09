@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerController :  MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
@@ -12,13 +12,30 @@ public class PlayerController :  MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     
     private Vector2 moveInput;
-    private bool isSprinting;
+    private Vector2 lastMoveDirection = Vector2.down;
+    
+    // Hash de parámetros
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
+    private static readonly int VerticalHash = Animator.StringToHash("Vertical");
     
     void Awake()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (animator == null) animator = GetComponent<Animator>();
-        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+    }
+    
+    void Start()
+    {
+        if (animator != null)
+        {
+            // Inicializar:  quieto mirando abajo
+            animator.SetFloat(HorizontalHash, 0f);
+            animator.SetFloat(VerticalHash, -1f);
+            animator.SetFloat(SpeedHash, 0f);
+            
+        }
     }
     
     void Update()
@@ -28,30 +45,42 @@ public class PlayerController :  MonoBehaviour
         moveInput.y = Input.GetAxisRaw("Vertical");
         moveInput.Normalize();
         
-        isSprinting = Input.GetKey(KeyCode.LeftShift);
-        
-        // Animacion ( cuando tenga sprites)
         UpdateAnimation();
     }
     
     void FixedUpdate()
     {
         // Movimiento
-        float currentSpeed = isSprinting ? moveSpeed * sprintMultiplier :  moveSpeed;
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        float currentSpeed = isSprinting ?  moveSpeed * sprintMultiplier :  moveSpeed;
         rb.linearVelocity = moveInput * currentSpeed;
     }
     
     void UpdateAnimation()
     {
-        // Por ahora solo voltear sprite 
-        if (moveInput. x != 0)
-        {
-            spriteRenderer.flipX = moveInput.x < 0;
-        }
+        if (animator == null) return;
         
-        // Cuando tenga animaciones, descomentar: 
-        // animator.SetFloat("Speed", moveInput.magnitude);
-        // animator.SetFloat("Horizontal", moveInput.x);
-        // animator.SetFloat("Vertical", moveInput.y);
+        float speed = moveInput.magnitude;
+        
+        // ⭐ ACTUALIZAR SPEED (esto controla Idle ⇄ Walk)
+        animator.SetFloat(SpeedHash, speed);
+        
+        if (speed > 0.01f)
+        {
+            // Está moviéndose → guardar dirección
+            lastMoveDirection = moveInput;
+            
+            // Actualizar dirección actual
+            animator.SetFloat(HorizontalHash, moveInput.x);
+            animator.SetFloat(VerticalHash, moveInput.y);
+            
+        }
+        else
+        {
+            // Está quieto → mantener última dirección para idle direccional
+            animator.SetFloat(HorizontalHash, lastMoveDirection.x);
+            animator. SetFloat(VerticalHash, lastMoveDirection.y);
+            
+        }
     }
 }

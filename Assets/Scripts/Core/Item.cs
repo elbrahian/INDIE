@@ -40,6 +40,12 @@ public class Item : ScriptableObject
     public int damage = 0;
     public float attackSpeed = 1f;
     public int durability = 100; // Durabilidad máxima
+
+    [Header("Equipment Properties")]
+    public bool isEquippable = false;
+    public EquipmentType equipmentType;
+    public int defense = 0; // Para armaduras
+    public float moveSpeedBonus = 0f; // Bonus de velocidad
 }
 
 // Enumeración de tipos de items
